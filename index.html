@@ -1,9 +1,24 @@
+¡Esto va a quedar increíble! El toque del nombre le da mucha personalidad y hacer que las estadísticas sean dinámicas convierte la página en una herramienta de análisis brutal (ver cómo sube o baja tu nota media según filtras por plataforma es muy adictivo).
+
+He aplicado todos los cambios:
+
+    Título personalizado: "La juegoteca del Señor Gris".
+
+    Combos Inteligentes: Los desplegables de Plataforma y Año se generan solos extrayendo los datos de tu Excel (así no tienes que escribirlos y no hay errores).
+
+    Ordenaciones simplificadas: Solo las tres que pediste.
+
+    Stats Dinámicas: Al buscar o filtrar, el total, la media y el sistema más jugado se recalculan al instante.
+
+Aquí tienes el código completo para actualizar tu index.html:
+HTML
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GameLog Pro | Nintendo & SEGA Edition</title>
+    <title>La juegoteca del Señor Gris</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -15,11 +30,10 @@
             --accent: #1e293b;
             --gold: #fbbf24;
             --border: #1e293b;
-            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
         }
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', -apple-system, sans-serif;
             background-color: var(--bg-dark);
             color: var(--text-bright);
             margin: 0; padding: 20px;
@@ -27,13 +41,13 @@
 
         .container { max-width: 1200px; margin: 0 auto; }
 
-        header { text-align: center; padding: 20px 0; }
-        header h1 { margin: 0; font-size: 2.2rem; letter-spacing: -1px; }
+        header { text-align: center; padding: 30px 0; }
+        header h1 { margin: 0; font-size: 2.5rem; letter-spacing: -1.5px; font-weight: 900; color: var(--text-bright); }
 
-        /* Stats */
+        /* Panel de Estadísticas Dinámicas */
         .stats-panel {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
             margin-bottom: 30px;
         }
@@ -44,11 +58,11 @@
             border-radius: 12px;
             text-align: center;
             border: 1px solid var(--border);
-            box-shadow: var(--shadow);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
         }
 
-        .stat-card span { display: block; color: var(--text-dim); font-size: 0.75rem; text-transform: uppercase; font-weight: 700; }
-        .stat-card strong { font-size: 1.5rem; color: var(--gold); }
+        .stat-card span { display: block; color: var(--text-dim); font-size: 0.75rem; text-transform: uppercase; font-weight: 700; margin-bottom: 5px; }
+        .stat-card strong { font-size: 1.6rem; color: var(--gold); }
 
         /* Controles */
         .controls {
@@ -86,13 +100,11 @@
             padding: 25px;
             border: 1px solid var(--border);
             display: flex; flex-direction: column;
-            box-shadow: var(--shadow);
             transition: 0.3s;
         }
 
         .card:hover { border-color: var(--text-dim); transform: translateY(-5px); }
-
-        .card h3 { margin: 0 0 12px 0; font-size: 1.3rem; }
+        .card h3 { margin: 0 0 12px 0; font-size: 1.3rem; font-weight: 800; }
 
         .tag-row { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
         .tag {
@@ -101,7 +113,6 @@
             border: 1px solid var(--border); display: flex; align-items: center; gap: 6px;
         }
 
-        /* Iconos especiales */
         .icon-nintendo { color: #e60012; font-weight: 900; }
         .icon-sega { color: #0089cf; }
 
@@ -116,7 +127,7 @@
         }
 
         .pagination { display: flex; justify-content: center; align-items: center; gap: 20px; margin: 40px 0; }
-        .btn-pag { padding: 12px 25px; background: var(--bg-card); color: white; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; }
+        .btn-pag { padding: 12px 25px; background: var(--bg-card); color: white; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-weight: bold; }
         .btn-pag:disabled { opacity: 0.2; cursor: not-allowed; }
     </style>
 </head>
@@ -124,20 +135,27 @@
 
 <div class="container">
     <header>
-        <h1><i class="fa-solid fa-database"></i> MI BIBLIOTECA</h1>
+        <h1><i class="fa-solid fa-ghost"></i> LA JUEGOTECA DEL SEÑOR GRIS</h1>
     </header>
 
-    <div id="stats" class="stats-panel"></div>
+    <div id="stats" class="stats-panel">
+        </div>
     
     <div class="controls">
-        <input type="text" id="fNombre" placeholder="Título..." onkeyup="resetYFiltrar()">
-        <input type="text" id="fPlataforma" placeholder="Plataforma..." onkeyup="resetYFiltrar()">
-        <input type="text" id="fAño" placeholder="Año..." onkeyup="resetYFiltrar()">
+        <input type="text" id="fNombre" placeholder="Buscar título..." onkeyup="resetYFiltrar()">
+        
+        <select id="fPlataforma" onchange="resetYFiltrar()">
+            <option value="">Todas las Plataformas</option>
+        </select>
+
+        <select id="fAño" onchange="resetYFiltrar()">
+            <option value="">Todos los Años</option>
+        </select>
+
         <select id="fOrder" onchange="resetYFiltrar()">
-            <option value="newest">Más recientes</option>
-            <option value="oldest">Más antiguos</option>
-            <option value="best">Mejor nota</option>
-            <option value="alpha">Nombre A-Z</option>
+            <option value="best">Mejor Nota</option>
+            <option value="worst">Peor Nota</option>
+            <option value="alpha">Alfabético (A-Z)</option>
         </select>
     </div>
 
@@ -161,52 +179,60 @@
         Papa.parse(urlSheet, {
             download: true, header: true, skipEmptyLines: true,
             complete: function(results) {
-                datosOriginales = results.data.filter(i => i.Nombre);
+                datosOriginales = results.data.filter(i => i.Nombre).map(item => {
+                    const añoRaw = item["Año de terminación"] || "";
+                    return { ...item, _añoLimpio: añoRaw.toString().replace(/\./g, '').trim() };
+                });
+                
+                rellenarCombos();
                 resetYFiltrar();
-                calcularStats();
             }
         });
     }
 
-    function calcularStats() {
-        const total = datosOriginales.length;
-        const sumaNotas = datosOriginales.reduce((acc, curr) => acc + parseFloat(curr.Puntuación || 0), 0);
-        const media = (sumaNotas / total).toFixed(2);
+    function rellenarCombos() {
+        const platSelect = document.getElementById('fPlataforma');
+        const añoSelect = document.getElementById('fAño');
         
-        const counts = {};
-        datosOriginales.forEach(i => counts[i.Plataforma] = (counts[i.Plataforma] || 0) + 1);
-        const topPlat = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+        const plataformas = [...new Set(datosOriginales.map(i => i.Plataforma))].sort();
+        const años = [...new Set(datosOriginales.map(i => i._añoLimpio))].sort((a,b) => b.localeCompare(a, undefined, {numeric: true}));
+
+        plataformas.forEach(p => platSelect.innerHTML += `<option value="${p}">${p}</option>`);
+        años.forEach(a => añoSelect.innerHTML += `<option value="${a}">${a}</option>`);
+    }
+
+    function calcularStats(data) {
+        const total = data.length;
+        const sumaNotas = data.reduce((acc, curr) => acc + parseFloat(curr.Puntuación || 0), 0);
+        const media = total > 0 ? (sumaNotas / total).toFixed(2) : "0.00";
+        
+        let sistemaMasJugado = "---";
+        if (total > 0) {
+            const counts = {};
+            data.forEach(i => counts[i.Plataforma] = (counts[i.Plataforma] || 0) + 1);
+            sistemaMasJugado = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+        }
 
         document.getElementById('stats').innerHTML = `
-            <div class="stat-card"><span>Juegos</span><strong>${total}</strong></div>
-            <div class="stat-card"><span>Media</span><strong>${media}</strong></div>
-            <div class="stat-card"><span>Top Plat.</span><strong>${topPlat}</strong></div>
+            <div class="stat-card"><span>Registros mostrados</span><strong>${total}</strong></div>
+            <div class="stat-card"><span>Nota Media (Vista)</span><strong>${media}</strong></div>
+            <div class="stat-card"><span>Sistema más jugado</span><strong>${sistemaMasJugado}</strong></div>
         `;
     }
 
-    // MAPEO DE ICONOS PERSONALIZADO (Nintendo N / SEGA Sonic)
     function getIconHTML(plat) {
         const p = plat.toLowerCase();
-        
-        // SEGA (Game Gear, Mega Drive, Master System, Saturn, Dreamcast)
         if (p.includes('mega drive') || p.includes('master system') || p.includes('game gear') || p.includes('dreamcast') || p.includes('saturn') || p.includes('sega')) {
-            return `<i class="fa-solid fa-spaghetti-monster-flying icon-sega" title="SEGA"></i>`; // Usamos un icono de criatura para Sonic
+            return `<i class="fa-solid fa-spaghetti-monster-flying icon-sega"></i>`;
         }
-        
-        // NINTENDO (Switch, DS, 3DS, NES, SNES, N64, Gamecube, Game Boy, Wii)
         if (p.includes('nintendo') || p.includes('switch') || p.includes('wii') || p.includes('ds') || p.includes('nes') || p.includes('snes') || p.includes('64') || p.includes('gamecube') || p.includes('game boy') || p.includes('gameboy')) {
             return `<span class="icon-nintendo">N</span>`;
         }
-
-        // OTROS
         if (p.includes('playstation') || p.includes('ps')) return `<i class="fa-brands fa-playstation"></i>`;
         if (p.includes('xbox')) return `<i class="fa-brands fa-xbox"></i>`;
         if (p.includes('steam')) return `<i class="fa-brands fa-steam"></i>`;
         if (p.includes('pc') || p.includes('epic') || p.includes('gog')) return `<i class="fa-solid fa-desktop"></i>`;
         if (p.includes('arcade')) return `<i class="fa-solid fa-ghost"></i>`;
-        if (p.includes('vr')) return `<i class="fa-solid fa-vr-cardboard"></i>`;
-        if (p.includes('android')) return `<i class="fa-brands fa-android"></i>`;
-
         return `<i class="fa-solid fa-gamepad"></i>`;
     }
 
@@ -219,7 +245,6 @@
         items.forEach(item => {
             const nota = parseFloat(item.Puntuación || 0);
             const scoreClass = nota >= 9 ? 'score-gold' : '';
-            const año = (item["Año de terminación"] || "").toString().replace(/\./g, '');
 
             grid.innerHTML += `
                 <div class="card">
@@ -227,7 +252,7 @@
                         <h3>${item.Nombre}</h3>
                         <div class="tag-row">
                             <span class="tag">${getIconHTML(item.Plataforma)} ${item.Plataforma}</span>
-                            <span class="tag"><i class="fa-regular fa-calendar"></i> ${año}</span>
+                            <span class="tag"><i class="fa-regular fa-calendar"></i> ${item._añoLimpio}</span>
                         </div>
                         <div class="score-box ${scoreClass}">
                             ${nota >= 9 ? '⭐' : '🔘'} ${item.Puntuación}/10
@@ -242,28 +267,25 @@
 
     function filtrarYOrdenar() {
         const n = document.getElementById('fNombre').value.toLowerCase();
-        const p = document.getElementById('fPlataforma').value.toLowerCase();
-        const a = document.getElementById('fAño').value.toLowerCase();
+        const p = document.getElementById('fPlataforma').value;
+        const a = document.getElementById('fAño').value;
         const order = document.getElementById('fOrder').value;
 
         datosFiltrados = datosOriginales.filter(i => 
-            (i.Nombre || "").toLowerCase().includes(n) &&
-            (i.Plataforma || "").toLowerCase().includes(p) &&
-            ((i["Año de terminación"] || "").toString().toLowerCase().includes(a))
+            (i.Nombre.toLowerCase().includes(n)) &&
+            (p === "" || i.Plataforma === p) &&
+            (a === "" || i._añoLimpio === a)
         );
 
         datosFiltrados.sort((a, b) => {
-            const valA = (a["Año de terminación"] || "").toString().replace(/\./g, '');
-            const valB = (b["Año de terminación"] || "").toString().replace(/\./g, '');
             const nA = parseFloat(a.Puntuación || 0);
             const nB = parseFloat(b.Puntuación || 0);
-
-            if (order === 'newest') return valB.localeCompare(valA, undefined, {numeric: true});
-            if (order === 'oldest') return valA.localeCompare(valB, undefined, {numeric: true});
             if (order === 'best') return nB - nA;
+            if (order === 'worst') return nA - nB;
             if (order === 'alpha') return a.Nombre.localeCompare(b.Nombre);
         });
 
+        calcularStats(datosFiltrados); // Recalcular stats con los datos filtrados
         renderizar();
     }
 
@@ -273,13 +295,14 @@
         const total = Math.ceil(datosFiltrados.length / itemsPorPagina);
         document.getElementById('pageInfo').innerText = `Página ${paginaActual} de ${total || 1}`;
         document.getElementById('btnPrev').disabled = paginaActual === 1;
-        document.getElementById('btnNext').disabled = paginaActual >= total;
+        document.getElementById('btnNext').disabled = paginaActual >= total || total === 0;
     }
 
     cargarDatos();
 </script>
 </body>
 </html>
+
 
 
 
