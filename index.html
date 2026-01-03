@@ -3,128 +3,165 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>La Biblioteca de Juegos del Señor Gris</title>
+    <title>Mi Biblioteca | Dark Mode</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
         :root {
-            --primary: #4f46e5;
-            --bg: #f1f5f9;
-            --card: #ffffff;
-            --text-main: #1e293b;
+            --bg-dark: #0f172a;       /* Fondo principal casi negro */
+            --bg-card: #1e293b;       /* Gris azulado oscuro para tarjetas */
+            --text-bright: #f8fafc;   /* Blanco para títulos */
+            --text-dim: #94a3b8;      /* Gris para textos secundarios */
+            --accent: #64748b;        /* Gris medio para detalles */
+            --border: #334155;        /* Color de bordes */
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg);
-            color: var(--text-main);
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-bright);
             margin: 0;
             padding: 20px;
         }
 
         .container { max-width: 1100px; margin: 0 auto; }
-        header { text-align: center; margin-bottom: 30px; }
-        h1 { color: var(--primary); }
 
+        header { text-align: center; margin-bottom: 40px; }
+        h1 { font-size: 2rem; letter-spacing: -1px; color: var(--text-bright); }
+
+        /* Buscador Oscuro */
         .search-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 12px;
-            background: var(--card);
+            background: var(--bg-card);
             padding: 20px;
-            border-radius: 16px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 12px;
             margin-bottom: 30px;
             position: sticky;
             top: 10px;
             z-index: 100;
+            border: 1px solid var(--border);
         }
 
         input {
             padding: 12px;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: white;
             font-size: 14px;
         }
 
+        input:focus { outline: none; border-color: var(--text-dim); }
+
+        /* Grid */
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 20px;
         }
 
+        /* Tarjetas Estilo Dark */
         .card {
-            background: var(--card);
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            border-top: 5px solid var(--primary);
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid var(--border);
             display: flex;
             flex-direction: column;
+            transition: transform 0.2s, border-color 0.2s;
         }
 
-        .card h3 { margin: 0 0 10px 0; font-size: 1.2rem; }
+        .card:hover { 
+            transform: translateY(-4px); 
+            border-color: var(--accent);
+        }
 
-        .tags { margin-bottom: 12px; }
+        .card h3 { margin: 0 0 12px 0; font-size: 1.25rem; color: #fff; }
+
+        .tags { margin-bottom: 15px; }
         .tag {
             display: inline-block;
-            padding: 3px 10px;
-            border-radius: 12px;
-            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.7rem;
             font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
             margin-right: 6px;
+            background: var(--bg-dark);
+            color: var(--text-dim);
+            border: 1px solid var(--border);
         }
-        .tag-plat { background: #e0e7ff; color: #4338ca; }
-        .tag-year { background: #fef3c7; color: #92400e; }
 
-        .score { font-weight: bold; color: #059669; margin-bottom: 10px; }
+        .score { 
+            font-size: 1rem; 
+            font-weight: 800; 
+            color: #fff; 
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
         .comment {
-            background: #f8fafc;
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            color: #475569;
-            font-style: italic;
+            background: rgba(15, 23, 42, 0.5);
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: var(--text-dim);
+            line-height: 1.5;
+            border-left: 2px solid var(--accent);
         }
 
+        /* Paginación */
         .pagination {
             display: flex;
             justify-content: center;
             align-items: center;
             gap: 20px;
-            margin: 40px 0;
+            margin: 50px 0;
         }
 
         .btn-pag {
-            padding: 10px 20px;
-            background: var(--primary);
+            padding: 12px 24px;
+            background: var(--bg-card);
             color: white;
-            border: none;
-            border-radius: 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
             cursor: pointer;
+            font-weight: 600;
         }
 
-        .btn-pag:disabled { background: #cbd5e1; }
+        .btn-pag:hover:not(:disabled) { background: var(--accent); }
+        .btn-pag:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        #pageInfo { color: var(--text-dim); font-size: 0.9rem; }
+
+        .loading { text-align: center; grid-column: 1/-1; color: var(--text-dim); padding: 50px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <header>
-        <h1>La biblioteca de Juegos de El Señor Gris</h1>
+        <h1>Mi Biblioteca</h1>
     </header>
     
     <div class="search-container">
-        <input type="text" id="fNombre" placeholder="Nombre..." onkeyup="resetYFiltrar()">
+        <input type="text" id="fNombre" placeholder="Buscar juego..." onkeyup="resetYFiltrar()">
         <input type="text" id="fPlataforma" placeholder="Plataforma..." onkeyup="resetYFiltrar()">
-        <input type="text" id="fAño" placeholder="Año o 'Anterior'..." onkeyup="resetYFiltrar()">
+        <input type="text" id="fAño" placeholder="Año..." onkeyup="resetYFiltrar()">
         <input type="number" id="fPuntos" placeholder="Nota..." onkeyup="resetYFiltrar()">
     </div>
 
-    <div id="grid" class="grid"></div>
+    <div id="grid" class="grid">
+        <div class="loading">Sincronizando con la nube...</div>
+    </div>
 
     <div class="pagination">
         <button id="btnPrev" class="btn-pag" onclick="changePage(-1)">Anterior</button>
-        <span id="pageInfo">Página 1</span>
+        <span id="pageInfo">Cargando...</span>
         <button id="btnNext" class="btn-pag" onclick="changePage(1)">Siguiente</button>
     </div>
 </div>
@@ -158,26 +195,32 @@
         const fin = inicio + itemsPorPagina;
         const itemsPagina = datosFiltrados.slice(inicio, fin);
 
+        if(itemsPagina.length === 0) {
+            grid.innerHTML = '<div class="loading">No hay registros que coincidan.</div>';
+        }
+
         itemsPagina.forEach(item => {
-            // Referencias EXACTAS a las columnas de tu CSV
+            // Mapeo exacto de tus columnas según el CSV proporcionado
             const nombre = item["Nombre"] || "---";
             const plataforma = item["Plataforma"] || "---";
-            const año = item["Año de terminación"] || "---";
+            const añoRaw = item["Año de terminación"] || "---";
             const puntuacion = item["Puntuación"] || "0";
             const comentario = item["Comentario"] || "";
 
-            // Limpieza visual del año si trae puntos (ej. 2.024 -> 2024)
-            let añoLimpio = año.toString().replace(/\./g, '');
+            // Limpiamos el año de puntos (ej. 2.024 -> 2024) pero respetamos "Anterior"
+            const año = añoRaw.toString().replace(/\./g, '');
 
             grid.innerHTML += `
                 <div class="card">
-                    <h3>${nombre}</h3>
-                    <div class="tags">
-                        <span class="tag tag-plat">${plataforma}</span>
-                        <span class="tag tag-year">${añoLimpio}</span>
+                    <div>
+                        <h3>${nombre}</h3>
+                        <div class="tags">
+                            <span class="tag">${plataforma}</span>
+                            <span class="tag">${año}</span>
+                        </div>
+                        <div class="score">⭐ ${puntuacion} / 10</div>
                     </div>
-                    <div class="score">⭐ ${puntuacion} / 10</div>
-                    <div class="comment">"${comentario}"</div>
+                    <div class="comment">${comentario}</div>
                 </div>
             `;
         });
@@ -223,4 +266,5 @@
 </script>
 </body>
 </html>
+
 
