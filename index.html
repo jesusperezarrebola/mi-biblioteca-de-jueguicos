@@ -3,268 +3,257 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Biblioteca | Dark Mode</title>
+    <title>GameLog Pro | Dark Edition</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --bg-dark: #0f172a;       /* Fondo principal casi negro */
-            --bg-card: #1e293b;       /* Gris azulado oscuro para tarjetas */
-            --text-bright: #f8fafc;   /* Blanco para títulos */
-            --text-dim: #94a3b8;      /* Gris para textos secundarios */
-            --accent: #64748b;        /* Gris medio para detalles */
-            --border: #334155;        /* Color de bordes */
+            --bg-dark: #020617;
+            --bg-card: #0f172a;
+            --text-bright: #f8fafc;
+            --text-dim: #94a3b8;
+            --accent: #334155;
+            --gold: #fbbf24;
+            --border: #1e293b;
         }
 
         body {
-            font-family: 'Inter', -apple-system, sans-serif;
+            font-family: 'Inter', sans-serif;
             background-color: var(--bg-dark);
             color: var(--text-bright);
-            margin: 0;
-            padding: 20px;
+            margin: 0; padding: 20px;
         }
 
-        .container { max-width: 1100px; margin: 0 auto; }
+        .container { max-width: 1200px; margin: 0 auto; }
 
-        header { text-align: center; margin-bottom: 40px; }
-        h1 { font-size: 2rem; letter-spacing: -1px; color: var(--text-bright); }
-
-        /* Buscador Oscuro */
-        .search-container {
+        /* Panel de Estadísticas */
+        .stats-panel {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 12px;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .stat-card span { display: block; color: var(--text-dim); font-size: 0.8rem; text-transform: uppercase; }
+        .stat-card strong { font-size: 1.4rem; color: var(--gold); }
+
+        /* Buscador y Filtros */
+        .controls {
             background: var(--bg-card);
             padding: 20px;
-            border-radius: 12px;
+            border-radius: 16px;
             margin-bottom: 30px;
-            position: sticky;
-            top: 10px;
-            z-index: 100;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
             border: 1px solid var(--border);
+            position: sticky; top: 10px; z-index: 100;
         }
 
-        input {
-            padding: 12px;
+        input, select {
+            padding: 10px 15px;
             background: var(--bg-dark);
             border: 1px solid var(--border);
-            border-radius: 6px;
+            border-radius: 8px;
             color: white;
-            font-size: 14px;
+            flex: 1; min-width: 150px;
         }
-
-        input:focus { outline: none; border-color: var(--text-dim); }
 
         /* Grid */
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
             gap: 20px;
         }
 
-        /* Tarjetas Estilo Dark */
         .card {
             background: var(--bg-card);
-            border-radius: 12px;
+            border-radius: 16px;
             padding: 24px;
             border: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            transition: transform 0.2s, border-color 0.2s;
+            transition: all 0.3s ease;
+            display: flex; flex-direction: column;
         }
 
-        .card:hover { 
-            transform: translateY(-4px); 
-            border-color: var(--accent);
-        }
+        .card:hover { border-color: var(--text-dim); transform: translateY(-5px); }
 
-        .card h3 { margin: 0 0 12px 0; font-size: 1.25rem; color: #fff; }
+        .card h3 { margin: 0 0 10px 0; font-size: 1.2rem; line-height: 1.2; }
 
-        .tags { margin-bottom: 15px; }
+        .tag-row { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
         .tag {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-right: 6px;
-            background: var(--bg-dark);
-            color: var(--text-dim);
-            border: 1px solid var(--border);
+            padding: 4px 10px; border-radius: 6px; font-size: 0.7rem;
+            font-weight: 700; background: var(--bg-dark); color: var(--text-dim);
+            border: 1px solid var(--border); display: flex; align-items: center; gap: 5px;
         }
 
-        .score { 
-            font-size: 1rem; 
-            font-weight: 800; 
-            color: #fff; 
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
+        .score-box { font-size: 1.1rem; font-weight: 900; margin-bottom: 15px; }
+        .score-gold { color: var(--gold); text-shadow: 0 0 10px rgba(251, 191, 36, 0.3); }
 
         .comment {
-            background: rgba(15, 23, 42, 0.5);
-            padding: 12px;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            color: var(--text-dim);
-            line-height: 1.5;
-            border-left: 2px solid var(--accent);
+            font-size: 0.9rem; color: var(--text-dim); line-height: 1.5;
+            padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px;
+            border-left: 2px solid var(--accent); font-style: italic;
         }
 
-        /* Paginación */
-        .pagination {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 20px;
-            margin: 50px 0;
-        }
-
-        .btn-pag {
-            padding: 12px 24px;
-            background: var(--bg-card);
-            color: white;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-
-        .btn-pag:hover:not(:disabled) { background: var(--accent); }
-        .btn-pag:disabled { opacity: 0.3; cursor: not-allowed; }
-
-        #pageInfo { color: var(--text-dim); font-size: 0.9rem; }
-
-        .loading { text-align: center; grid-column: 1/-1; color: var(--text-dim); padding: 50px; }
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 20px; margin: 40px 0; }
+        .btn-pag { padding: 10px 20px; background: var(--accent); color: white; border: none; border-radius: 8px; cursor: pointer; }
+        .btn-pag:disabled { opacity: 0.3; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <header>
-        <h1>Mi Biblioteca</h1>
+        <h1><i class="fa-solid fa-gamepad"></i> Mi GameLog</h1>
     </header>
+
+    <div id="stats" class="stats-panel">
+        </div>
     
-    <div class="search-container">
-        <input type="text" id="fNombre" placeholder="Buscar juego..." onkeyup="resetYFiltrar()">
+    <div class="controls">
+        <input type="text" id="fNombre" placeholder="Buscar título..." onkeyup="resetYFiltrar()">
         <input type="text" id="fPlataforma" placeholder="Plataforma..." onkeyup="resetYFiltrar()">
         <input type="text" id="fAño" placeholder="Año..." onkeyup="resetYFiltrar()">
-        <input type="number" id="fPuntos" placeholder="Nota..." onkeyup="resetYFiltrar()">
+        <select id="fOrder" onchange="resetYFiltrar()">
+            <option value="newest">Últimos terminados</option>
+            <option value="oldest">Primeros terminados</option>
+            <option value="best">Mejor nota</option>
+            <option value="worst">Peor nota</option>
+            <option value="alpha">Alfabético</option>
+        </select>
     </div>
 
-    <div id="grid" class="grid">
-        <div class="loading">Sincronizando con la nube...</div>
-    </div>
+    <div id="grid" class="grid"></div>
 
     <div class="pagination">
         <button id="btnPrev" class="btn-pag" onclick="changePage(-1)">Anterior</button>
-        <span id="pageInfo">Cargando...</span>
+        <span id="pageInfo">Página 1</span>
         <button id="btnNext" class="btn-pag" onclick="changePage(1)">Siguiente</button>
     </div>
 </div>
 
 <script>
     const urlSheet = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqp9_7gRe9hMmEXJDq71YKVUUIEWlkq7jWX9JfZhUF_Ztw6NFtouJdJqeYUZne027X1U3sArOCzQvn/pub?output=csv';
-    
-    let datosCompletos = [];
+    let datosOriginales = [];
     let datosFiltrados = [];
     let paginaActual = 1;
     const itemsPorPagina = 12;
 
     async function cargarDatos() {
         Papa.parse(urlSheet, {
-            download: true,
-            header: true,
-            skipEmptyLines: true,
+            download: true, header: true, skipEmptyLines: true,
             complete: function(results) {
-                datosCompletos = results.data;
-                datosFiltrados = [...datosCompletos];
-                renderizar();
+                datosOriginales = results.data.filter(i => i.Nombre);
+                resetYFiltrar();
+                calcularStats();
             }
         });
+    }
+
+    function calcularStats() {
+        const total = datosOriginales.length;
+        const sumaNotas = datosOriginales.reduce((acc, curr) => acc + parseFloat(curr.Puntuación || 0), 0);
+        const media = (sumaNotas / total).toFixed(1);
+        
+        const counts = {};
+        datosOriginales.forEach(i => counts[i.Plataforma] = (counts[i.Plataforma] || 0) + 1);
+        const topPlat = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+
+        document.getElementById('stats').innerHTML = `
+            <div class="stat-card"><span>Total</span><strong>${total}</strong></div>
+            <div class="stat-card"><span>Media</span><strong>${media}</strong></div>
+            <div class="stat-card"><span>Top Plat.</span><strong>${topPlat}</strong></div>
+        `;
+    }
+
+    function getIcon(plat) {
+        const p = plat.toLowerCase();
+        if (p.includes('steam') || p.includes('pc')) return 'fa-laptop';
+        if (p.includes('switch') || p.includes('nintendo')) return 'fa-gamepad';
+        if (p.includes('playstation') || p.includes('ps')) return 'fa-brands fa-playstation';
+        if (p.includes('arcade')) return 'fa-solid fa-ghost';
+        return 'fa-solid fa-box';
     }
 
     function renderizar() {
         const grid = document.getElementById('grid');
         grid.innerHTML = '';
-
         const inicio = (paginaActual - 1) * itemsPorPagina;
-        const fin = inicio + itemsPorPagina;
-        const itemsPagina = datosFiltrados.slice(inicio, fin);
+        const items = datosFiltrados.slice(inicio, inicio + itemsPorPagina);
 
-        if(itemsPagina.length === 0) {
-            grid.innerHTML = '<div class="loading">No hay registros que coincidan.</div>';
-        }
-
-        itemsPagina.forEach(item => {
-            // Mapeo exacto de tus columnas según el CSV proporcionado
-            const nombre = item["Nombre"] || "---";
-            const plataforma = item["Plataforma"] || "---";
-            const añoRaw = item["Año de terminación"] || "---";
-            const puntuacion = item["Puntuación"] || "0";
-            const comentario = item["Comentario"] || "";
-
-            // Limpiamos el año de puntos (ej. 2.024 -> 2024) pero respetamos "Anterior"
-            const año = añoRaw.toString().replace(/\./g, '');
+        items.forEach(item => {
+            const nota = parseFloat(item.Puntuación || 0);
+            const scoreClass = nota >= 9 ? 'score-gold' : '';
+            const año = (item["Año de terminación"] || "").replace(/\./g, '');
 
             grid.innerHTML += `
                 <div class="card">
                     <div>
-                        <h3>${nombre}</h3>
-                        <div class="tags">
-                            <span class="tag">${plataforma}</span>
-                            <span class="tag">${año}</span>
+                        <h3>${item.Nombre}</h3>
+                        <div class="tag-row">
+                            <span class="tag"><i class="${getIcon(item.Plataforma)}"></i> ${item.Plataforma}</span>
+                            <span class="tag"><i class="fa-regular fa-calendar"></i> ${año}</span>
                         </div>
-                        <div class="score">⭐ ${puntuacion} / 10</div>
+                        <div class="score-box ${scoreClass}">
+                            ${nota >= 9 ? '⭐' : '🔘'} ${item.Puntuación}/10
+                        </div>
                     </div>
-                    <div class="comment">${comentario}</div>
+                    <div class="comment">${item.Comentario}</div>
                 </div>
             `;
         });
-
         actualizarControles();
     }
 
-    function resetYFiltrar() {
-        paginaActual = 1;
+    function filtrarYOrdenar() {
         const n = document.getElementById('fNombre').value.toLowerCase();
         const p = document.getElementById('fPlataforma').value.toLowerCase();
         const a = document.getElementById('fAño').value.toLowerCase();
-        const pts = document.getElementById('fPuntos').value;
+        const order = document.getElementById('fOrder').value;
 
-        datosFiltrados = datosCompletos.filter(i => {
-            const nombre = (i["Nombre"] || "").toLowerCase();
-            const plat = (i["Plataforma"] || "").toLowerCase();
-            const anio = (i["Año de terminación"] || "").toString().toLowerCase();
-            const score = (i["Puntuación"] || "").toString();
+        datosFiltrados = datosOriginales.filter(i => 
+            (i.Nombre || "").toLowerCase().includes(n) &&
+            (i.Plataforma || "").toLowerCase().includes(p) &&
+            ((i["Año de terminación"] || "").toString().toLowerCase().includes(a))
+        );
 
-            return nombre.includes(n) && 
-                   plat.includes(p) && 
-                   anio.includes(a) && 
-                   (pts === "" || score.includes(pts));
+        datosFiltrados.sort((a, b) => {
+            const añoA = (a["Año de terminación"] || "").toString().replace(/\./g, '');
+            const añoB = (b["Año de terminación"] || "").toString().replace(/\./g, '');
+            const notaA = parseFloat(a.Puntuación || 0);
+            const notaB = parseFloat(b.Puntuación || 0);
+
+            if (order === 'newest') return añoB.localeCompare(añoA, undefined, {numeric: true});
+            if (order === 'oldest') return añoA.localeCompare(añoB, undefined, {numeric: true});
+            if (order === 'best') return notaB - notaA;
+            if (order === 'worst') return notaA - notaB;
+            if (order === 'alpha') return a.Nombre.localeCompare(b.Nombre);
         });
+
         renderizar();
     }
 
-    function changePage(direccion) {
-        paginaActual += direccion;
-        renderizar();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
+    function resetYFiltrar() { paginaActual = 1; filtrarYOrdenar(); }
+    function changePage(d) { paginaActual += d; renderizar(); window.scrollTo(0,0); }
     function actualizarControles() {
-        const totalPaginas = Math.ceil(datosFiltrados.length / itemsPorPagina);
-        document.getElementById('pageInfo').innerText = `Página ${paginaActual} de ${totalPaginas || 1}`;
-        document.getElementById('btnPrev').disabled = (paginaActual === 1);
-        document.getElementById('btnNext').disabled = (paginaActual >= totalPaginas || totalPaginas === 0);
+        const total = Math.ceil(datosFiltrados.length / itemsPorPagina);
+        document.getElementById('pageInfo').innerText = `Página ${paginaActual} de ${total || 1}`;
+        document.getElementById('btnPrev').disabled = paginaActual === 1;
+        document.getElementById('btnNext').disabled = paginaActual >= total;
     }
 
     cargarDatos();
 </script>
 </body>
 </html>
+
 
 
