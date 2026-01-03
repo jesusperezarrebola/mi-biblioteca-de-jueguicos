@@ -207,17 +207,36 @@
 
     function getIconHTML(plat) {
         const p = plat.toLowerCase();
+        
+        // SEGA - El Anillo de Sonic (Color Dorado)
         if (p.includes('mega drive') || p.includes('master system') || p.includes('game gear') || p.includes('dreamcast') || p.includes('saturn') || p.includes('sega')) {
-            return `<i class="fa-solid fa-spaghetti-monster-flying icon-sega"></i>`;
+            return `<i class="fa-regular fa-circle" style="color: #fbbf24; font-weight: 900; filter: drop-shadow(0 0 2px rgba(251,191,36,0.5));" title="SEGA"></i>`;
         }
+        
+        // NINTENDO - La N (Color Rojo)
         if (p.includes('nintendo') || p.includes('switch') || p.includes('wii') || p.includes('ds') || p.includes('nes') || p.includes('snes') || p.includes('64') || p.includes('gamecube') || p.includes('game boy') || p.includes('gameboy')) {
-            return `<span class="icon-nintendo">N</span>`;
+            return `<span style="color: #e60012; font-weight: 900; font-family: 'Arial Black', sans-serif;">N</span>`;
         }
-        if (p.includes('playstation') || p.includes('ps')) return `<i class="fa-brands fa-playstation"></i>`;
-        if (p.includes('xbox')) return `<i class="fa-brands fa-xbox"></i>`;
+
+        // PLAYSTATION
+        if (p.includes('playstation') || p.includes('ps')) {
+            return `<i class="fa-brands fa-playstation" style="color: #3b82f6;"></i>`;
+        }
+
+        // XBOX
+        if (p.includes('xbox')) {
+            return `<i class="fa-brands fa-xbox" style="color: #22c55e;"></i>`;
+        }
+
+        // PC & TIENDAS
         if (p.includes('steam')) return `<i class="fa-brands fa-steam"></i>`;
-        if (p.includes('pc') || p.includes('epic') || p.includes('gog')) return `<i class="fa-solid fa-desktop"></i>`;
+        if (p.includes('pc') || p.includes('epic') || p.includes('gog') || p.includes('origin')) return `<i class="fa-solid fa-desktop"></i>`;
+        
+        // OTROS
         if (p.includes('arcade')) return `<i class="fa-solid fa-ghost"></i>`;
+        if (p.includes('vr')) return `<i class="fa-solid fa-vr-cardboard"></i>`;
+        if (p.includes('android')) return `<i class="fa-brands fa-android"></i>`;
+
         return `<i class="fa-solid fa-gamepad"></i>`;
     }
 
@@ -287,6 +306,7 @@
 </script>
 </body>
 </html>
+
 
 
 
