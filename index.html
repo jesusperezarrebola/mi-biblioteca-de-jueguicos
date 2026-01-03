@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Videoteca Personal</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --bg: #f1f5f9;
+            --card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 { font-size: 2.5rem; color: var(--primary); margin-bottom: 10px; }
+        p.subtitle { color: var(--text-muted); }
+
+        /* Buscador Estilizado */
+        .search-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            background: var(--card);
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            position: sticky;
+            top: 20px;
+            z-index: 10;
+        }
+
+        input {
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus { border-color: var(--primary); border-width: 2px; }
+
+        /* Grid de Tarjetas */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+
+        .card h3 { margin: 0 0 10px 0; font-size: 1.4rem; color: #0f172a; }
+
+        .tag-group { margin-bottom: 15px; }
+        .tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-right: 5px;
+        }
+
+        .tag-platform { background: #e0e7ff; color: #4338ca; }
+        .tag-year { background: #fef3c7; color: #92400e; }
+
+        .score-badge {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #059669;
+            margin: 10px 0;
+        }
+
+        .comment-box {
+            background: #f8fafc;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            color: #475569;
+            line-height: 1.5;
+            border-left: 3px solid #cbd5e1;
+        }
+
+        .loading { text-align: center; font-size: 1.2rem; color: var(--text-muted); grid-column: 1/-1; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Mi Biblioteca</h1>
+        <p class="subtitle">Gestionado desde Google Sheets</p>
+    </header>
+    
+    <div class="search-container">
+        <input type="text" id="fNombre" placeholder="Buscar por nombre..." onkeyup="filtrar()">
+        <input type="text" id="fPlataforma" placeholder="Plataforma..." onkeyup="filtrar()">
+        <input type="number" id="fAño" placeholder="Año..." onkeyup="filtrar()">
+        <input type="number" id="fPuntos" placeholder="Puntuación..." onkeyup="filtrar()">
+        <input type="text" id="fComentario" placeholder="Palabra en comentario..." onkeyup="filtrar()">
+    </div>
+
+    <div id="grid" class="grid">
+        <div class="loading">Cargando tus datos...</div>
+    </div>
+</div>
+
+<script>
+    // Tu enlace de Google Sheets
+    const urlSheet = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqp9_7gRe9hMmEXJDq71YKVUUIEWlkq7jWX9JfZhUF_Ztw6NFtouJdJqeYUZne027X1U3sArOCzQvn/pub?output=csv';
+    
+    let datosGlobales = [];
+
+async function cargarDatos() {
+        try {
+            const response = await fetch(urlSheet);
+            if (!response.ok) throw new Error("Google Sheets no responde");
+            
+            const csvText = await response.text();
+            Papa.parse(csvText, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    datosGlobales = results.data;
+                    renderizar(datosGlobales);
+                }
+            });
+        } catch (err) {
+            console.error(err);
+            document.getElementById('grid').innerHTML = `
+                <div class="loading">
+                    <p>Error de conexión.</p>
+                    <small>Prueba a subir el HTML a una web o usa un servidor local.</small>
+                </div>`;
+        }
+    }
+
+    function renderizar(items) {
+        const grid = document.getElementById('grid');
+        grid.innerHTML = '';
+        
+        if(items.length === 0) {
+            grid.innerHTML = '<div class="loading">No se encontraron resultados.</div>';
+            return;
+        }
+
+        items.forEach(item => {
+            // Aseguramos que los nombres de las propiedades coincidan con los de tu Excel
+            const nombre = item.Nombre || item.nombre || 'Sin título';
+            const plataforma = item.Plataforma || item.plataforma || 'Desconocida';
+            const año = item.Año || item.año || '-';
+            const puntuacion = item.Puntuación || item.puntuación || '0';
+            const comentario = item.Comentario || item.comentario || 'Sin comentarios.';
+
+            grid.innerHTML += `
+                <div class="card">
+                    <div>
+                        <h3>${nombre}</h3>
+                        <div class="tag-group">
+                            <span class="tag tag-platform">${plataforma}</span>
+                            <span class="tag tag-year">${año}</span>
+                        </div>
+                        <div class="score-badge">⭐ ${puntuacion} / 10</div>
+                    </div>
+                    <div class="comment-box">
+                        "${comentario}"
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function filtrar() {
+        const n = document.getElementById('fNombre').value.toLowerCase();
+        const p = document.getElementById('fPlataforma').value.toLowerCase();
+        const a = document.getElementById('fAño').value;
+        const pts = document.getElementById('fPuntos').value;
+        const c = document.getElementById('fComentario').value.toLowerCase();
+
+        const filtrados = datosGlobales.filter(i => {
+            const nombre = (i.Nombre || i.nombre || '').toLowerCase();
+            const plat = (i.Plataforma || i.plataforma || '').toLowerCase();
+            const anio = (i.Año || i.año || '').toString();
+            const punt = (i.Puntuación || i.puntuación || '').toString();
+            const comm = (i.Comentario || i.comentario || '').toLowerCase();
+
+            return nombre.includes(n) &&
+                   plat.includes(p) &&
+                   (a === "" || anio === a) &&
+                   (pts === "" || punt.includes(pts)) &&
+                   comm.includes(c);
+        });
+        renderizar(filtrados);
+    }
+
+    cargarDatos();
+</script>
+</body>
+</html>
