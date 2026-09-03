@@ -33,14 +33,18 @@
             margin: 0 auto;
         }
 
-        /* HEADER & TÓGGLE DE MODO */
-        header {
+        /* HEADER & BARRA TOP CON CONTROLES EN LAS ESQUINAS */
+        .top-bar {
             display: flex;
-            flex-direction: column;
+            justify-content: space-between;
             align-items: center;
-            gap: 15px;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
+            min-height: 45px;
+        }
+
+        header {
             text-align: center;
+            margin-bottom: 25px;
         }
 
         h1 {
@@ -50,11 +54,40 @@
             transition: color var(--transition-speed) ease, text-shadow var(--transition-speed) ease;
         }
 
+        /* CHECKBOX BACKLOG (ESQUINA IZQUIERDA) */
+        .backlog-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #1e293b;
+            padding: 8px 14px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #cbd5e1;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.3s ease;
+        }
+
+        .backlog-container:hover {
+            border-color: var(--accent-color);
+        }
+
+        .backlog-container input {
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent-color);
+        }
+
+        /* TOGGLE DE MODO (ESQUINA DERECHA) */
         .toggle-container {
             display: flex;
             align-items: center;
             background: #1e293b;
-            padding: 5px;
+            padding: 4px;
             border-radius: 30px;
             border: 1px solid var(--border-color);
             cursor: pointer;
@@ -62,10 +95,10 @@
         }
 
         .toggle-btn {
-            padding: 8px 18px;
+            padding: 6px 14px;
             border-radius: 20px;
             font-weight: bold;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             transition: all 0.3s ease;
             color: #94a3b8;
         }
@@ -233,6 +266,7 @@
         .score-gold { background-color: rgba(234, 179, 8, 0.2); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.4); }
         .score-good { background-color: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.4); }
         .score-mid  { background-color: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+        .score-backlog { background-color: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); }
 
         .comment {
             font-size: 0.85rem;
@@ -401,13 +435,24 @@
 <body>
 
 <div class="container">
-    <header>
-        <h1 id="mainTitle"><i class="fa-solid fa-ghost"></i> LA JUEGOTECA DEL SEÑOR GRIS</h1>
-        
+
+    <!-- BARRA SUPERIOR (CHECKBOX A LA IZQ / SWITCH A LA DER) -->
+    <div class="top-bar">
+        <!-- Esquina Superior Izquierda: Checkbox Backlog -->
+        <label class="backlog-container" id="backlogWrapper" title="Ver solo juegos poseídos aún no terminados">
+            <input type="checkbox" id="chkBacklog" onchange="resetYFiltrar()">
+            <span><i class="fa-solid fa-box-archive"></i> Ver Backlog</span>
+        </label>
+
+        <!-- Esquina Superior Derecha: Switch Modo -->
         <div class="toggle-container" onclick="toggleModo()">
             <div id="lblJuegoteca" class="toggle-btn active"><i class="fa-solid fa-gamepad"></i> Juegoteca</div>
             <div id="lblWishlist" class="toggle-btn"><i class="fa-solid fa-bookmark"></i> Wishlist</div>
         </div>
+    </div>
+
+    <header>
+        <h1 id="mainTitle"><i class="fa-solid fa-ghost"></i> LA JUEGOTECA DEL SEÑOR GRIS</h1>
     </header>
 
     <div class="stats-grid" id="stats">
@@ -470,6 +515,7 @@
             document.getElementById('mainTitle').innerHTML = `<i class="fa-solid fa-bookmark"></i> WISHLIST DEL SEÑOR GRIS`;
             document.getElementById('fAño').style.display = 'none';
             document.getElementById('fPrioridad').style.display = 'block';
+            document.getElementById('backlogWrapper').style.visibility = 'hidden'; // Oculta opción backlog en wishlist
         } else {
             document.body.classList.remove('mode-wishlist');
             document.getElementById('lblWishlist').classList.remove('active');
@@ -477,6 +523,7 @@
             document.getElementById('mainTitle').innerHTML = `<i class="fa-solid fa-ghost"></i> LA JUEGOTECA DEL SEÑOR GRIS`;
             document.getElementById('fAño').style.display = 'block';
             document.getElementById('fPrioridad').style.display = 'none';
+            document.getElementById('backlogWrapper').style.visibility = 'visible'; // Muestra opción backlog
         }
 
         actualizarOpcionesOrden();
@@ -561,25 +608,46 @@
         let htmlStats = '';
 
         if (modoActual === 'juegoteca') {
-            const sumaNotas = data.reduce((acc, curr) => acc + parseFloat(curr.Puntuación || 0), 0);
-            const media = total > 0 ? (sumaNotas / total).toFixed(2) : "0.00";
-            
-            let sistemaMasJugado = "---";
-            if (total > 0) {
-                const counts = {};
-                data.forEach(i => {
-                    if (i.Plataforma) counts[i.Plataforma] = (counts[i.Plataforma] || 0) + 1;
-                });
-                if (Object.keys(counts).length > 0) {
-                    sistemaMasJugado = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
-                }
-            }
+            const esBacklog = document.getElementById('chkBacklog').checked;
 
-            htmlStats = `
-                <div class="stat-card"><span>Registros mostrados</span><strong>${total}</strong></div>
-                <div class="stat-card"><span>Nota Media (Vista)</span><strong>${media}</strong></div>
-                <div class="stat-card"><span>Sistema más jugado</span><strong>${sistemaMasJugado}</strong></div>
-            `;
+            if (esBacklog) {
+                let sistemaMasPendiente = "---";
+                if (total > 0) {
+                    const counts = {};
+                    data.forEach(i => {
+                        if (i.Plataforma) counts[i.Plataforma] = (counts[i.Plataforma] || 0) + 1;
+                    });
+                    if (Object.keys(counts).length > 0) {
+                        sistemaMasPendiente = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+                    }
+                }
+
+                htmlStats = `
+                    <div class="stat-card"><span>Juegos en Backlog</span><strong>${total}</strong></div>
+                    <div class="stat-card"><span>Estado</span><strong>⏳ Pendientes</strong></div>
+                    <div class="stat-card"><span>Plataforma Principal</span><strong>${sistemaMasPendiente}</strong></div>
+                `;
+            } else {
+                const sumaNotas = data.reduce((acc, curr) => acc + parseFloat(curr.Puntuación || 0), 0);
+                const media = total > 0 ? (sumaNotas / total).toFixed(2) : "0.00";
+                
+                let sistemaMasJugado = "---";
+                if (total > 0) {
+                    const counts = {};
+                    data.forEach(i => {
+                        if (i.Plataforma) counts[i.Plataforma] = (counts[i.Plataforma] || 0) + 1;
+                    });
+                    if (Object.keys(counts).length > 0) {
+                        sistemaMasJugado = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+                    }
+                }
+
+                htmlStats = `
+                    <div class="stat-card"><span>Registros mostrados</span><strong>${total}</strong></div>
+                    <div class="stat-card"><span>Nota Media (Vista)</span><strong>${media}</strong></div>
+                    <div class="stat-card"><span>Sistema más jugado</span><strong>${sistemaMasJugado}</strong></div>
+                `;
+            }
         } else {
             const altaPrioridad = data.filter(i => i._prioridad.toLowerCase() === 'alta').length;
             
@@ -657,27 +725,40 @@
             let mainStatHTML = '';
 
             if (modoActual === 'juegoteca') {
-                const nota = parseFloat(item.Puntuación || 0);
-                let scoreClass = '';
-                if (nota >= 9) scoreClass = 'score-gold';
-                else if (nota >= 7) scoreClass = 'score-good';
-                else if (nota < 5) scoreClass = 'score-mid';
+                const esBacklog = !item._añoLimpio;
 
-                const añoTerminadoHTML = item._añoLimpio 
-                    ? `<span class="tag" title="Año en que me lo pasé por última vez"><i class="fa-regular fa-calendar-check"></i> ${item._añoLimpio}</span>` 
-                    : '';
+                if (esBacklog) {
+                    mainStatHTML = `
+                        <div class="tag-row">
+                            <span class="tag">${getIconHTML(item.Plataforma)} ${item.Plataforma || ''}</span>
+                            ${devHTML}
+                            ${añoSalidaHTML}
+                        </div>
+                        <div class="score-box score-backlog">
+                            ⏳ Pendiente (Backlog)
+                        </div>
+                    `;
+                } else {
+                    const nota = parseFloat(item.Puntuación || 0);
+                    let scoreClass = '';
+                    if (nota >= 9) scoreClass = 'score-gold';
+                    else if (nota >= 7) scoreClass = 'score-good';
+                    else if (nota < 5) scoreClass = 'score-mid';
 
-                mainStatHTML = `
-                    <div class="tag-row">
-                        <span class="tag">${getIconHTML(item.Plataforma)} ${item.Plataforma || ''}</span>
-                        ${devHTML}
-                        ${añoSalidaHTML}
-                        ${añoTerminadoHTML}
-                    </div>
-                    <div class="score-box ${scoreClass}">
-                        ${nota >= 9 ? '⭐' : '🔘'} ${item.Puntuación}/10
-                    </div>
-                `;
+                    const añoTerminadoHTML = `<span class="tag" title="Año en que me lo pasé por última vez"><i class="fa-regular fa-calendar-check"></i> ${item._añoLimpio}</span>`;
+
+                    mainStatHTML = `
+                        <div class="tag-row">
+                            <span class="tag">${getIconHTML(item.Plataforma)} ${item.Plataforma || ''}</span>
+                            ${devHTML}
+                            ${añoSalidaHTML}
+                            ${añoTerminadoHTML}
+                        </div>
+                        <div class="score-box ${scoreClass}">
+                            ${nota >= 9 ? '⭐' : '🔘'} ${item.Puntuación}/10
+                        </div>
+                    `;
+                }
             } else {
                 const prio = item._prioridad.toLowerCase();
                 let prioClass = 'prio-media';
@@ -745,13 +826,21 @@
 
         if (modoActual === 'juegoteca') {
             const a = document.getElementById('fAño').value;
+            const soloBacklog = document.getElementById('chkBacklog').checked;
 
-            datosFiltrados = datosOriginales.filter(i => 
-                ((i.Nombre && i.Nombre.toLowerCase().includes(n)) || (i._developer && i._developer.toLowerCase().includes(n))) &&
-                (p === "" || i.Plataforma === p) &&
-                (a === "" || i._añoLimpio === a) &&
-                (aSalida === "" || i._añoSalidaLimpio === aSalida)
-            );
+            datosFiltrados = datosOriginales.filter(i => {
+                const coincideNombre = ((i.Nombre && i.Nombre.toLowerCase().includes(n)) || (i._developer && i._developer.toLowerCase().includes(n)));
+                const coincidePlat = (p === "" || i.Plataforma === p);
+                const coincideAñoSalida = (aSalida === "" || i._añoSalidaLimpio === aSalida);
+
+                // Filtrado por Backlog vs Completados
+                if (soloBacklog) {
+                    return coincideNombre && coincidePlat && coincideAñoSalida && (!i._añoLimpio);
+                } else {
+                    const coincideAño = (a === "" || i._añoLimpio === a);
+                    return coincideNombre && coincidePlat && coincideAñoSalida && coincideAño && (i._añoLimpio !== "");
+                }
+            });
 
             datosFiltrados.sort((a, b) => {
                 const nA = parseFloat(a.Puntuación || 0);
