@@ -257,8 +257,8 @@
             padding: 6px 10px;
             border-radius: 6px;
             display: inline-block;
-            margin-top: auto;
             align-self: flex-start;
+            margin-top: auto; /* Empuja la insignia siempre al fondo de la tarjeta */
             background-color: #334155;
             color: #fff;
         }
@@ -272,9 +272,11 @@
             font-size: 0.85rem;
             color: #cbd5e1;
             margin-top: 10px;
+            margin-bottom: 12px;
             font-style: italic;
             border-top: 1px dashed var(--border-color);
             padding-top: 8px;
+            flex-grow: 1; /* Permite ocupar el espacio vertical sobrante */
         }
 
         /* PAGINACIÓN */
@@ -515,16 +517,15 @@
             document.getElementById('mainTitle').innerHTML = `<i class="fa-solid fa-bookmark"></i> WISHLIST DEL SEÑOR GRIS`;
             document.getElementById('fAño').style.display = 'none';
             document.getElementById('fPrioridad').style.display = 'block';
-            document.getElementById('backlogWrapper').style.visibility = 'hidden'; // Oculta opción backlog en wishlist
+            document.getElementById('backlogWrapper').style.visibility = 'hidden';
         } else {
             document.body.classList.remove('mode-wishlist');
             document.getElementById('lblWishlist').classList.remove('active');
             document.getElementById('lblJuegoteca').classList.add('active');
             document.getElementById('mainTitle').innerHTML = `<i class="fa-solid fa-ghost"></i> LA JUEGOTECA DEL SEÑOR GRIS`;
             document.getElementById('fPrioridad').style.display = 'none';
-            document.getElementById('backlogWrapper').style.visibility = 'visible'; // Muestra opción backlog
+            document.getElementById('backlogWrapper').style.visibility = 'visible';
             
-            // Ajustar visibilidad de filtro Año según el checkbox de Backlog
             const soloBacklog = document.getElementById('chkBacklog').checked;
             document.getElementById('fAño').style.display = soloBacklog ? 'none' : 'block';
         }
@@ -723,24 +724,23 @@
 
             const commentHTML = (item.Comentario && item.Comentario !== "NaN") 
                 ? `<div class="comment">${item.Comentario}</div>` 
-                : '';
+                : '<div style="flex-grow: 1;"></div>';
 
-            let mainStatHTML = '';
+            let tagsHTML = '';
+            let badgeHTML = '';
 
             if (modoActual === 'juegoteca') {
                 const esBacklog = !item._añoLimpio;
 
                 if (esBacklog) {
-                    mainStatHTML = `
+                    tagsHTML = `
                         <div class="tag-row">
                             <span class="tag">${getIconHTML(item.Plataforma)} ${item.Plataforma || ''}</span>
                             ${devHTML}
                             ${añoSalidaHTML}
                         </div>
-                        <div class="score-box score-backlog">
-                            ⏳ Pendiente (Backlog)
-                        </div>
                     `;
+                    badgeHTML = `<div class="score-box score-backlog">⏳ Pendiente (Backlog)</div>`;
                 } else {
                     const nota = parseFloat(item.Puntuación || 0);
                     let scoreClass = '';
@@ -750,17 +750,15 @@
 
                     const añoTerminadoHTML = `<span class="tag" title="Año en que me lo pasé por última vez"><i class="fa-regular fa-calendar-check"></i> ${item._añoLimpio}</span>`;
 
-                    mainStatHTML = `
+                    tagsHTML = `
                         <div class="tag-row">
                             <span class="tag">${getIconHTML(item.Plataforma)} ${item.Plataforma || ''}</span>
                             ${devHTML}
                             ${añoSalidaHTML}
                             ${añoTerminadoHTML}
                         </div>
-                        <div class="score-box ${scoreClass}">
-                            ${nota >= 9 ? '⭐' : '🔘'} ${item.Puntuación}/10
-                        </div>
                     `;
+                    badgeHTML = `<div class="score-box ${scoreClass}">${nota >= 9 ? '⭐' : '🔘'} ${item.Puntuación}/10</div>`;
                 }
             } else {
                 const prio = item._prioridad.toLowerCase();
@@ -770,16 +768,14 @@
                 if (prio === 'alta') { prioClass = 'prio-alta'; prioIcon = '🔥'; }
                 else if (prio === 'baja') { prioClass = 'prio-baja'; prioIcon = '💤'; }
 
-                mainStatHTML = `
+                tagsHTML = `
                     <div class="tag-row">
                         <span class="tag">${getIconHTML(item.Plataforma)} ${item.Plataforma || ''}</span>
                         ${devHTML}
                         ${añoSalidaHTML}
                     </div>
-                    <div class="prio-box ${prioClass}">
-                        ${prioIcon} Prioridad: ${item._prioridad}
-                    </div>
                 `;
+                badgeHTML = `<div class="prio-box ${prioClass}">${prioIcon} Prioridad: ${item._prioridad}</div>`;
             }
 
             grid.innerHTML += `
@@ -787,8 +783,9 @@
                     ${imgHTML}
                     <div class="card-body">
                         <h3>${item.Nombre}</h3>
-                        ${mainStatHTML}
+                        ${tagsHTML}
                         ${commentHTML}
+                        ${badgeHTML}
                     </div>
                 </div>
             `;
@@ -831,7 +828,6 @@
             const a = document.getElementById('fAño').value;
             const soloBacklog = document.getElementById('chkBacklog').checked;
 
-            // Control de visibilidad del filtro "Año en que me lo pasé"
             document.getElementById('fAño').style.display = soloBacklog ? 'none' : 'block';
 
             datosFiltrados = datosOriginales.filter(i => {
@@ -839,7 +835,6 @@
                 const coincidePlat = (p === "" || i.Plataforma === p);
                 const coincideAñoSalida = (aSalida === "" || i._añoSalidaLimpio === aSalida);
 
-                // Filtrado por Backlog vs Completados
                 if (soloBacklog) {
                     return coincideNombre && coincidePlat && coincideAñoSalida && (!i._añoLimpio);
                 } else {
