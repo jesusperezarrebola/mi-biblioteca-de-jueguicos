@@ -310,7 +310,8 @@
 <script>
     // URLS DE LAS DOS HOJAS EN FORMATO CSV
     const urlJuegoteca = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRVA5GnUSczsHp84ffYDXJJcZR4dKBe_qjAwNiQasaniWZpf9GjPwvEC4Tk_RPPG_ZuHymjLEAdau_z/pub?output=csv';
-    const urlWishlist = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRVA5GnUSczsHp84ffYDXJJcZR4dKBe_qjAwNiQasaniWZpf9GjPwvEC4Tk_RPPG_ZuHymjLEAdau_z/pubhtml?gid=1285884416&single=true';
+    // CORREGIDO: Cambiado pubhtml por pub?gid=...&output=csv
+    const urlWishlist = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRVA5GnUSczsHp84ffYDXJJcZR4dKBe_qjAwNiQasaniWZpf9GjPwvEC4Tk_RPPG_ZuHymjLEAdau_z/pub?gid=1285884416&single=true&output=csv';
 
     let modoActual = 'juegoteca'; // 'juegoteca' o 'wishlist'
     let datosOriginales = [];
@@ -369,25 +370,30 @@
         const url = modoActual === 'juegoteca' ? urlJuegoteca : urlWishlist;
         
         Papa.parse(url, {
-            download: true, header: true, skipEmptyLines: true,
+            download: true, 
+            header: true, 
+            skipEmptyLines: true,
             complete: function(results) {
-                datosOriginales = results.data.filter(i => i.Nombre).map(item => {
-                    const añoRaw = item["Año de terminación"] || "";
-                    const añoSalidaRaw = item["Año de salida"] || "";
-                    
-                    const añoLimpio = añoRaw.toString().replace(/\./g, '').split('.')[0].trim();
-                    const añoSalidaLimpio = añoSalidaRaw.toString().replace(/\./g, '').split('.')[0].trim();
-                    const prioridad = item["Prioridad"] ? item["Prioridad"].trim() : "Media";
+                // Validación para evitar errores si viene alguna fila vacía o mal formateada
+                datosOriginales = results.data
+                    .filter(i => i && i.Nombre && i.Nombre.trim() !== "")
+                    .map(item => {
+                        const añoRaw = item["Año de terminación"] || "";
+                        const añoSalidaRaw = item["Año de salida"] || "";
+                        
+                        const añoLimpio = añoRaw.toString().replace(/\./g, '').split('.')[0].trim();
+                        const añoSalidaLimpio = añoSalidaRaw.toString().replace(/\./g, '').split('.')[0].trim();
+                        const prioridad = item["Prioridad"] ? item["Prioridad"].trim() : "Media";
 
-                    return { 
-                        ...item, 
-                        _añoLimpio: añoLimpio,
-                        _añoSalidaLimpio: añoSalidaLimpio,
-                        _prioridad: prioridad,
-                        _imgUrl: item["URL Captura"] ? item["URL Captura"].trim() : "",
-                        _developer: item["Developer"] ? item["Developer"].trim() : ""
-                    };
-                });
+                        return { 
+                            ...item, 
+                            _añoLimpio: añoLimpio,
+                            _añoSalidaLimpio: añoSalidaLimpio,
+                            _prioridad: prioridad,
+                            _imgUrl: item["URL Captura"] ? item["URL Captura"].trim() : "",
+                            _developer: item["Developer"] ? item["Developer"].trim() : ""
+                        };
+                    });
                 
                 rellenarCombos();
                 resetYFiltrar();
@@ -427,8 +433,12 @@
             let sistemaMasJugado = "---";
             if (total > 0) {
                 const counts = {};
-                data.forEach(i => counts[i.Plataforma] = (counts[i.Plataforma] || 0) + 1);
-                sistemaMasJugado = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+                data.forEach(i => {
+                    if (i.Plataforma) counts[i.Plataforma] = (counts[i.Plataforma] || 0) + 1;
+                });
+                if (Object.keys(counts).length > 0) {
+                    sistemaMasJugado = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+                }
             }
 
             htmlStats = `
@@ -442,8 +452,12 @@
             let sistemaMasDeseado = "---";
             if (total > 0) {
                 const counts = {};
-                data.forEach(i => counts[i.Plataforma] = (counts[i.Plataforma] || 0) + 1);
-                sistemaMasDeseado = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+                data.forEach(i => {
+                    if (i.Plataforma) counts[i.Plataforma] = (counts[i.Plataforma] || 0) + 1;
+                });
+                if (Object.keys(counts).length > 0) {
+                    sistemaMasDeseado = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+                }
             }
 
             htmlStats = `
@@ -521,7 +535,7 @@
 
                 mainStatHTML = `
                     <div class="tag-row">
-                        <span class="tag">${getIconHTML(item.Plataforma)} ${item.Plataforma}</span>
+                        <span class="tag">${getIconHTML(item.Plataforma)} ${item.Plataforma || ''}</span>
                         ${devHTML}
                         ${añoSalidaHTML}
                         ${añoTerminadoHTML}
@@ -540,7 +554,7 @@
 
                 mainStatHTML = `
                     <div class="tag-row">
-                        <span class="tag">${getIconHTML(item.Plataforma)} ${item.Plataforma}</span>
+                        <span class="tag">${getIconHTML(item.Plataforma)} ${item.Plataforma || ''}</span>
                         ${devHTML}
                         ${añoSalidaHTML}
                     </div>
@@ -599,7 +613,7 @@
             const a = document.getElementById('fAño').value;
 
             datosFiltrados = datosOriginales.filter(i => 
-                (i.Nombre.toLowerCase().includes(n) || i._developer.toLowerCase().includes(n)) &&
+                ((i.Nombre && i.Nombre.toLowerCase().includes(n)) || (i._developer && i._developer.toLowerCase().includes(n))) &&
                 (p === "" || i.Plataforma === p) &&
                 (a === "" || i._añoLimpio === a) &&
                 (aSalida === "" || i._añoSalidaLimpio === aSalida)
@@ -616,7 +630,7 @@
             const prio = document.getElementById('fPrioridad').value;
 
             datosFiltrados = datosOriginales.filter(i => 
-                (i.Nombre.toLowerCase().includes(n) || i._developer.toLowerCase().includes(n)) &&
+                ((i.Nombre && i.Nombre.toLowerCase().includes(n)) || (i._developer && i._developer.toLowerCase().includes(n))) &&
                 (p === "" || i.Plataforma === p) &&
                 (aSalida === "" || i._añoSalidaLimpio === aSalida) &&
                 (prio === "" || i._prioridad.toLowerCase() === prio.toLowerCase())
