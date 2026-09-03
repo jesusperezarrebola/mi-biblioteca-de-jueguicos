@@ -521,9 +521,12 @@
             document.getElementById('lblWishlist').classList.remove('active');
             document.getElementById('lblJuegoteca').classList.add('active');
             document.getElementById('mainTitle').innerHTML = `<i class="fa-solid fa-ghost"></i> LA JUEGOTECA DEL SEÑOR GRIS`;
-            document.getElementById('fAño').style.display = 'block';
             document.getElementById('fPrioridad').style.display = 'none';
             document.getElementById('backlogWrapper').style.visibility = 'visible'; // Muestra opción backlog
+            
+            // Ajustar visibilidad de filtro Año según el checkbox de Backlog
+            const soloBacklog = document.getElementById('chkBacklog').checked;
+            document.getElementById('fAño').style.display = soloBacklog ? 'none' : 'block';
         }
 
         actualizarOpcionesOrden();
@@ -827,6 +830,9 @@
         if (modoActual === 'juegoteca') {
             const a = document.getElementById('fAño').value;
             const soloBacklog = document.getElementById('chkBacklog').checked;
+
+            // Control de visibilidad del filtro "Año en que me lo pasé"
+            document.getElementById('fAño').style.display = soloBacklog ? 'none' : 'block';
 
             datosFiltrados = datosOriginales.filter(i => {
                 const coincideNombre = ((i.Nombre && i.Nombre.toLowerCase().includes(n)) || (i._developer && i._developer.toLowerCase().includes(n)));
