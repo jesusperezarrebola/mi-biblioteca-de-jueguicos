@@ -82,33 +82,58 @@
         .card {
             background: var(--bg-card);
             border-radius: 16px;
-            padding: 25px;
+            overflow: hidden;
             border: 1px solid var(--border);
-            display: flex; flex-direction: column;
+            display: flex; 
+            flex-direction: column;
             transition: 0.3s;
         }
 
         .card:hover { border-color: var(--text-dim); transform: translateY(-5px); }
+        
+        .card-img-container {
+            width: 100%;
+            height: 180px;
+            background-color: #0b1120;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .card-img-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover .card-img-container img {
+            transform: scale(1.05);
+        }
+
+        .card-body {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
         .card h3 { margin: 0 0 12px 0; font-size: 1.3rem; font-weight: 800; }
 
-        .tag-row { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
+        .tag-row { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
         .tag {
-            padding: 5px 12px; border-radius: 6px; font-size: 0.7rem;
+            padding: 5px 10px; border-radius: 6px; font-size: 0.7rem;
             font-weight: 700; background: var(--bg-dark); color: var(--text-dim);
             border: 1px solid var(--border); display: flex; align-items: center; gap: 6px;
         }
-
-        .icon-nintendo { color: #e60012; font-weight: 900; }
-        .icon-sega { color: #0089cf; }
 
         .score-box { font-size: 1.1rem; font-weight: 900; margin-bottom: 15px; }
         .score-gold { color: var(--gold); }
 
         .comment {
             font-size: 0.9rem; color: var(--text-dim); line-height: 1.6;
-            padding: 15px; background: rgba(0,0,0,0.2); border-radius: 10px;
+            padding: 12px 15px; background: rgba(0,0,0,0.2); border-radius: 10px;
             border-left: 3px solid var(--accent); font-style: italic;
-            flex-grow: 1;
+            flex-grow: 1; margin-top: auto;
         }
 
         .pagination { display: flex; justify-content: center; align-items: center; gap: 20px; margin: 40px 0; }
@@ -123,18 +148,17 @@
         <h1><i class="fa-solid fa-ghost"></i> LA JUEGOTECA DEL SEÑOR GRIS</h1>
     </header>
 
-    <div id="stats" class="stats-panel">
-        </div>
+    <div id="stats" class="stats-panel"></div>
     
     <div class="controls">
-        <input type="text" id="fNombre" placeholder="Buscar título..." onkeyup="resetYFiltrar()">
+        <input type="text" id="fNombre" placeholder="Buscar título o developer..." onkeyup="resetYFiltrar()">
         
         <select id="fPlataforma" onchange="resetYFiltrar()">
             <option value="">Todas las Plataformas</option>
         </select>
 
         <select id="fAño" onchange="resetYFiltrar()">
-            <option value="">Todos los Años</option>
+            <option value="">Todos los Años de Terminación</option>
         </select>
 
         <select id="fOrder" onchange="resetYFiltrar()">
@@ -166,7 +190,19 @@
             complete: function(results) {
                 datosOriginales = results.data.filter(i => i.Nombre).map(item => {
                     const añoRaw = item["Año de terminación"] || "";
-                    return { ...item, _añoLimpio: añoRaw.toString().replace(/\./g, '').trim() };
+                    const añoSalidaRaw = item["Año de salida"] || "";
+                    
+                    // Limpieza de formato numérico de años
+                    const añoLimpio = añoRaw.toString().replace(/\./g, '').split('.')[0].trim();
+                    const añoSalidaLimpio = añoSalidaRaw.toString().replace(/\./g, '').split('.')[0].trim();
+                    
+                    return { 
+                        ...item, 
+                        _añoLimpio: añoLimpio,
+                        _añoSalidaLimpio: añoSalidaLimpio,
+                        _imgUrl: item["URL Captura"] ? item["URL Captura"].trim() : "",
+                        _developer: item["Developer"] ? item["Developer"].trim() : ""
+                    };
                 });
                 
                 rellenarCombos();
@@ -179,8 +215,8 @@
         const platSelect = document.getElementById('fPlataforma');
         const añoSelect = document.getElementById('fAño');
         
-        const plataformas = [...new Set(datosOriginales.map(i => i.Plataforma))].sort();
-        const años = [...new Set(datosOriginales.map(i => i._añoLimpio))].sort((a,b) => b.localeCompare(a, undefined, {numeric: true}));
+        const plataformas = [...new Set(datosOriginales.map(i => i.Plataforma).filter(Boolean))].sort();
+        const años = [...new Set(datosOriginales.map(i => i._añoLimpio).filter(Boolean))].sort((a,b) => b.localeCompare(a, undefined, {numeric: true}));
 
         plataformas.forEach(p => platSelect.innerHTML += `<option value="${p}">${p}</option>`);
         años.forEach(a => añoSelect.innerHTML += `<option value="${a}">${a}</option>`);
@@ -206,33 +242,23 @@
     }
 
     function getIconHTML(plat) {
+        if (!plat) return `<i class="fa-solid fa-gamepad"></i>`;
         const p = plat.toLowerCase();
         
-        // SEGA - El Anillo de Sonic (Color Dorado)
         if (p.includes('mega drive') || p.includes('master system') || p.includes('game gear') || p.includes('dreamcast') || p.includes('saturn') || p.includes('sega')) {
-            return `<i class="fa-regular fa-circle" style="color: #fbbf24; font-weight: 900; filter: drop-shadow(0 0 2px rgba(251,191,36,0.5));" title="SEGA"></i>`;
+            return `<i class="fa-regular fa-circle" style="color: #fbbf24; font-weight: 900;" title="SEGA"></i>`;
         }
-        
-        // NINTENDO - La N (Color Rojo)
         if (p.includes('nintendo') || p.includes('switch') || p.includes('wii') || p.includes('ds') || p.includes('nes') || p.includes('snes') || p.includes('64') || p.includes('gamecube') || p.includes('game boy') || p.includes('gameboy')) {
             return `<span style="color: #e60012; font-weight: 900; font-family: 'Arial Black', sans-serif;">N</span>`;
         }
-
-        // PLAYSTATION
         if (p.includes('playstation') || p.includes('ps')) {
             return `<i class="fa-brands fa-playstation" style="color: #3b82f6;"></i>`;
         }
-
-        // XBOX
         if (p.includes('xbox')) {
             return `<i class="fa-brands fa-xbox" style="color: #22c55e;"></i>`;
         }
-
-        // PC & TIENDAS
         if (p.includes('steam')) return `<i class="fa-brands fa-steam"></i>`;
         if (p.includes('pc') || p.includes('epic') || p.includes('gog') || p.includes('origin')) return `<i class="fa-solid fa-desktop"></i>`;
-        
-        // OTROS
         if (p.includes('arcade')) return `<i class="fa-solid fa-ghost"></i>`;
         if (p.includes('vr')) return `<i class="fa-solid fa-vr-cardboard"></i>`;
         if (p.includes('android')) return `<i class="fa-brands fa-android"></i>`;
@@ -249,20 +275,48 @@
         items.forEach(item => {
             const nota = parseFloat(item.Puntuación || 0);
             const scoreClass = nota >= 9 ? 'score-gold' : '';
+            
+            // Imagen opcional
+            const imgHTML = item._imgUrl 
+                ? `<div class="card-img-container">
+                    <img src="${item._imgUrl}" alt="${item.Nombre}" loading="lazy" onerror="this.parentElement.style.display='none'">
+                   </div>` 
+                : '';
+
+            // Etiquetas dinámicas
+            const devHTML = item._developer 
+                ? `<span class="tag" title="Desarrollador: ${item._developer}"><i class="fa-solid fa-code"></i> ${item._developer}</span>` 
+                : '';
+
+            const añoSalidaHTML = item._añoSalidaLimpio 
+                ? `<span class="tag" title="Año de lanzamiento"><i class="fa-solid fa-rocket"></i> ${item._añoSalidaLimpio}</span>` 
+                : '';
+
+            const añoTerminadoHTML = item._añoLimpio 
+                ? `<span class="tag" title="Año en que se completó"><i class="fa-regular fa-calendar-check"></i> ${item._añoLimpio}</span>` 
+                : '';
+
+            // Comentario opcional
+            const commentHTML = (item.Comentario && item.Comentario !== "NaN") 
+                ? `<div class="comment">${item.Comentario}</div>` 
+                : '';
 
             grid.innerHTML += `
                 <div class="card">
-                    <div>
+                    ${imgHTML}
+                    <div class="card-body">
                         <h3>${item.Nombre}</h3>
                         <div class="tag-row">
                             <span class="tag">${getIconHTML(item.Plataforma)} ${item.Plataforma}</span>
-                            <span class="tag"><i class="fa-regular fa-calendar"></i> ${item._añoLimpio}</span>
+                            ${devHTML}
+                            ${añoSalidaHTML}
+                            ${añoTerminadoHTML}
                         </div>
                         <div class="score-box ${scoreClass}">
                             ${nota >= 9 ? '⭐' : '🔘'} ${item.Puntuación}/10
                         </div>
+                        ${commentHTML}
                     </div>
-                    <div class="comment">${item.Comentario}</div>
                 </div>
             `;
         });
@@ -276,7 +330,7 @@
         const order = document.getElementById('fOrder').value;
 
         datosFiltrados = datosOriginales.filter(i => 
-            (i.Nombre.toLowerCase().includes(n)) &&
+            (i.Nombre.toLowerCase().includes(n) || i._developer.toLowerCase().includes(n)) &&
             (p === "" || i.Plataforma === p) &&
             (a === "" || i._añoLimpio === a)
         );
@@ -289,7 +343,7 @@
             if (order === 'alpha') return a.Nombre.localeCompare(b.Nombre);
         });
 
-        calcularStats(datosFiltrados); // Recalcular stats con los datos filtrados
+        calcularStats(datosFiltrados);
         renderizar();
     }
 
@@ -306,10 +360,6 @@
 </script>
 </body>
 </html>
-
-
-
-
 
 
 
